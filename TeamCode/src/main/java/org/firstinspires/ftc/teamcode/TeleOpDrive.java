@@ -41,10 +41,11 @@ public class TeleOpDrive extends LinearOpMode {
         rightRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         mainShooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        // Reverse right side motors
+        // Reverse some motors
         rightFront.setDirection(DcMotor.Direction.REVERSE);
         rightRear.setDirection(DcMotor.Direction.REVERSE);
-        leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftFront.setDirection(DcMotor.Direction.REVERSE);
+
         // Report initialized status
         telemetry.addData("Status", "Initialized");
         telemetry.update();
