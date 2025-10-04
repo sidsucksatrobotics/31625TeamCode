@@ -57,7 +57,6 @@ public class AutonomousTemplate extends LinearOpMode {
         leftRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        mainShooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Display starting encoder positions for all four drive motors
         telemetry.addData("Starting Pos",

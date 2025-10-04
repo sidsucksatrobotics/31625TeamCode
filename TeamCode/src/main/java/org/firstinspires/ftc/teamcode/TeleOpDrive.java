@@ -39,12 +39,15 @@ public class TeleOpDrive extends LinearOpMode {
         leftRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        mainShooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        mainShooter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Reverse some motors
         rightFront.setDirection(DcMotor.Direction.REVERSE);
         rightRear.setDirection(DcMotor.Direction.REVERSE);
         leftFront.setDirection(DcMotor.Direction.REVERSE);
+
+        leftShooter.setDirection(CRServo.Direction.FORWARD);
+        rightShooter.setDirection(CRServo.Direction.FORWARD); // or REVERSE if it spins opposite
 
         // Report initialized status
         telemetry.addData("Status", "Initialized");
@@ -54,10 +57,12 @@ public class TeleOpDrive extends LinearOpMode {
 
         while (opModeIsActive()) {
             // Toggle precision mode on bumper press
-            if (gamepad2.left_bumper && !lastBumperState) {
+            boolean currentBumper = gamepad2.left_bumper;
+            if (currentBumper && !lastBumperState) {
                 precisionMode = !precisionMode;
             }
-            lastBumperState = gamepad2.left_bumper;
+            lastBumperState = currentBumper;
+
 
 
             // Joystick inputs
@@ -91,22 +96,25 @@ public class TeleOpDrive extends LinearOpMode {
                 backRightPower  *= 0.5;
             }
 
-            // Toggle shooter mode on button press of "A"
-            if (gamepad2.a && !lastShooterState) {
-                shooterMode = !shooterMode;
+            // Detect rising edge of "A" button for toggle
+            boolean currentShooterButton = gamepad2.a;
+            if (currentShooterButton && !lastShooterState) {
+                shooterMode = !shooterMode;   // toggle shooter on/off
             }
-            lastShooterState = gamepad2.a;
+            lastShooterState = currentShooterButton;
 
-            // Shooter control
+            // Apply shooter power based on toggle state
             if (shooterMode) {
-                mainShooter.setPower(1.0);   // run forward full speed
-                leftShooter.setPower(1.0);   // adjust sign if reversed
-                rightShooter.setPower(-1.0); // adjust sign if reversed
+                mainShooter.setPower(1.0);   // main shooter motor
+                leftShooter.setPower(1.0);   // CRServo shooter
+                rightShooter.setPower(1.0);  // CRServo shooter
             } else {
                 mainShooter.setPower(0);
                 leftShooter.setPower(0);
                 rightShooter.setPower(0);
             }
+
+
 
 
             // Set motor powers
