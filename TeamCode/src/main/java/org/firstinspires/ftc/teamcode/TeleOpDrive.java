@@ -57,7 +57,7 @@ public class TeleOpDrive extends LinearOpMode {
 
         while (opModeIsActive()) {
             // Toggle precision mode on bumper press
-            boolean currentBumper = gamepad2.left_bumper;
+            boolean currentBumper = gamepad1.left_bumper;
             if (currentBumper && !lastBumperState) {
                 precisionMode = !precisionMode;
             }
@@ -66,9 +66,9 @@ public class TeleOpDrive extends LinearOpMode {
 
 
             // Joystick inputs
-            double y  = -gamepad2.left_stick_y;  // forward/back
-            double x  =  gamepad2.left_stick_x;  // strafe
-            double rx =  gamepad2.right_stick_x; // rotation
+            double y  = -gamepad1.left_stick_y;  // forward/back
+            double x  =  gamepad1.left_stick_x;  // strafe
+            double rx =  gamepad1.right_stick_x; // rotation
 
             // Calculate motor powers
             double frontLeftPower  = y + x + rx;

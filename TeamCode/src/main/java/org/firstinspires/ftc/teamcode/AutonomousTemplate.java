@@ -50,7 +50,6 @@ public class AutonomousTemplate extends LinearOpMode {
         leftRear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightRear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        mainShooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         // Run motors using encoders (so we can track movement)
         leftFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
