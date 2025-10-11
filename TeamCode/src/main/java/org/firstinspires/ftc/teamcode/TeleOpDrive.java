@@ -105,8 +105,9 @@ public class TeleOpDrive extends LinearOpMode {
 
             // Apply shooter power based on toggle state
             if (shooterMode) {
-                mainShooter.setPower(1.0);   // main shooter motor
-                leftShooter.setPower(1.0);   // CRServo shooter
+                mainShooter.setPower(1.0);     // main shooter motor
+                sleep(1500);
+                leftShooter.setPower(-1.0);   // CRServo shooter
                 rightShooter.setPower(1.0);  // CRServo shooter
             } else {
                 mainShooter.setPower(0);
