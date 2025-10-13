@@ -11,7 +11,7 @@ public class AutonomousTemplate extends LinearOpMode {
 
     // Drive motors
     private DcMotor leftFront, leftRear, rightFront, rightRear;
-    // Shooter motors/servos (example)
+    // Shooter motors/servos
     private DcMotor mainShooter;
     private CRServo leftShooter, rightShooter;
 
@@ -82,6 +82,9 @@ public class AutonomousTemplate extends LinearOpMode {
         // Turn right 90 degrees
         encoderDriveMecanum(TURN_SPEED, 0, 0, 90, 4.0);
 
+        // Turn on shooter for 2000 ms
+        shooterMode(2000);
+
         // Move backward 24 inches
         encoderDriveMecanum(DRIVE_SPEED, -24, 0, 0, 4.0);
 
@@ -102,16 +105,17 @@ public class AutonomousTemplate extends LinearOpMode {
         return Math.PI * TRACK_WIDTH * (degrees / 360.0);
     }
 
-    public void shooterMode(boolean shooterMode) {
-        if (shooterMode) {
-            mainShooter.setPower(1.0);   // run forward full speed
-            leftShooter.setPower(1.0);   // adjust sign if reversed
-            rightShooter.setPower(-1.0); // adjust sign if reversed
-        } else {
-            mainShooter.setPower(0);
-            leftShooter.setPower(0);
-            rightShooter.setPower(0);
-        }
+    public void shooterMode(int timeMS) {
+        mainShooter.setPower(1.0);
+        sleep(2000); // Lets the motor get to full speed
+        leftShooter.setPower(-1.0);
+        rightShooter.setPower(1.0);
+
+        sleep(timeMS); // Run for timeMS
+
+        mainShooter.setPower(0);
+        leftShooter.setPower(0);
+        rightShooter.setPower(0);
 
     }
 

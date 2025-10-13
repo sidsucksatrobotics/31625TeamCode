@@ -1,10 +1,10 @@
+// Don't delete lines 1 through 10, it is importing packages and libraries, and declaring the class
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @TeleOp(name="TeleOp Drive with Toggle Precision Mode", group="Linear Opmode")
 public class TeleOpDrive extends LinearOpMode {
@@ -56,14 +56,6 @@ public class TeleOpDrive extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            // Toggle precision mode on bumper press
-            boolean currentBumper = gamepad1.left_bumper;
-            if (currentBumper && !lastBumperState) {
-                precisionMode = !precisionMode;
-            }
-            lastBumperState = currentBumper;
-
-
 
             // Joystick inputs
             double y  = -gamepad1.left_stick_y;  // forward/back
@@ -88,7 +80,14 @@ public class TeleOpDrive extends LinearOpMode {
             frontRightPower /= max;
             backRightPower  /= max;
 
-            // Apply precision mode if toggled
+            // Toggle precision mode on left bumper press
+            boolean currentBumper = gamepad1.left_bumper;
+            if (currentBumper && !lastBumperState) {
+                precisionMode = !precisionMode;
+            }
+            lastBumperState = currentBumper;
+
+            // Apply precision scaling
             if (precisionMode) {
                 frontLeftPower  *= 0.5;
                 backLeftPower   *= 0.5;
@@ -96,26 +95,25 @@ public class TeleOpDrive extends LinearOpMode {
                 backRightPower  *= 0.5;
             }
 
-            // Detect rising edge of "A" button for toggle
+
+            // Logic for toggling shooter mode
             boolean currentShooterButton = gamepad2.a;
             if (currentShooterButton && !lastShooterState) {
                 shooterMode = !shooterMode;   // toggle shooter on/off
+
+                if (shooterMode) {
+                    mainShooter.setPower(1.0);
+                    sleep(2000); // allows mainShooter to speed up
+                    leftShooter.setPower(-1.0);
+                    rightShooter.setPower(1.0);
+                } else {
+                    // Turns shooters off
+                    mainShooter.setPower(0);
+                    leftShooter.setPower(0);
+                    rightShooter.setPower(0);
+                }
             }
             lastShooterState = currentShooterButton;
-
-            // Apply shooter power based on toggle state
-            if (shooterMode) {
-                mainShooter.setPower(1.0);     // main shooter motor
-                sleep(1500);
-                leftShooter.setPower(-1.0);   // CRServo shooter
-                rightShooter.setPower(1.0);  // CRServo shooter
-            } else {
-                mainShooter.setPower(0);
-                leftShooter.setPower(0);
-                rightShooter.setPower(0);
-            }
-
-
 
 
             // Set motor powers
@@ -139,6 +137,7 @@ public class TeleOpDrive extends LinearOpMode {
             telemetry.addData("Back Right Encoder", rightRear.getCurrentPosition());
             telemetry.addData("Shooter Encoder", mainShooter.getCurrentPosition());
 
+            // Updating data
             telemetry.update();
         }
     }
