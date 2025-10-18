@@ -15,6 +15,7 @@ public class TeleOpDrive extends LinearOpMode {
     private boolean lastBumperState = false; // for detecting button press of slow mode
     private boolean shooterMode = false; // starts with shooters off
     private boolean lastShooterState = false; // for detecting button press of shooter
+    private long shooterStartTime = 0;
 
     @Override
     public void runOpMode() {
@@ -96,24 +97,31 @@ public class TeleOpDrive extends LinearOpMode {
             }
 
 
-            // Logic for toggling shooter mode
+            // Toggle shooter mode when A is pressed
             boolean currentShooterButton = gamepad2.a;
             if (currentShooterButton && !lastShooterState) {
-                shooterMode = !shooterMode;   // toggle shooter on/off
+                shooterMode = !shooterMode;
 
                 if (shooterMode) {
+                    // Start main shooter motor and record time
                     mainShooter.setPower(1.0);
-                    sleep(2000); // allows mainShooter to speed up
-                    leftShooter.setPower(-1.0);
-                    rightShooter.setPower(1.0);
+                    shooterStartTime = System.currentTimeMillis(); // mark start
                 } else {
-                    // Turns shooters off
+                    // Stop everything
                     mainShooter.setPower(0);
                     leftShooter.setPower(0);
                     rightShooter.setPower(0);
                 }
             }
             lastShooterState = currentShooterButton;
+
+            // After toggling, check if 2 seconds have passed since main shooter started
+            if (shooterMode && System.currentTimeMillis() - shooterStartTime >= 2000) {
+                // Feed balls after spin-up delay
+                leftShooter.setPower(-1.0);
+                rightShooter.setPower(1.0);
+            }
+
 
 
             // Set motor powers
