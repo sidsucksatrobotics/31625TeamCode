@@ -1,10 +1,17 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+
 
 @Autonomous(name="Mecanum: Auto Template", group="Robot")
 public class AutonomousTemplate extends LinearOpMode {
@@ -16,6 +23,8 @@ public class AutonomousTemplate extends LinearOpMode {
     private CRServo leftShooter, rightShooter;
 
     private ElapsedTime runtime = new ElapsedTime();
+
+    private BNO055IMU imu;
 
     // Constants for encoder calculations
     static final double COUNTS_PER_MOTOR_REV = 537.7;    // GoBilda 312 RPM encoder counts per revolution
@@ -66,6 +75,24 @@ public class AutonomousTemplate extends LinearOpMode {
                 rightRear.getCurrentPosition());
         telemetry.update();
 
+        // IMU setup
+        BNO055IMU.Parameters imuParameters = new BNO055IMU.Parameters();
+        imuParameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        imuParameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        imuParameters.loggingEnabled = false;
+
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(imuParameters);
+
+        // Wait for IMU calibration
+        while (!imu.isGyroCalibrated() && opModeIsActive()) {
+            telemetry.addData("IMU", "Calibrating...");
+            telemetry.update();
+        }
+        telemetry.addData("IMU", "Calibrated!");
+        telemetry.update();
+
+
         // Wait for the driver to press START
         waitForStart();
 
@@ -80,7 +107,7 @@ public class AutonomousTemplate extends LinearOpMode {
         encoderDriveMecanum(DRIVE_SPEED, 0, 12, 0, 4.0);
 
         // Turn right 90 degrees
-        encoderDriveMecanum(TURN_SPEED, 0, 0, 90, 4.0);
+        imuTurn(90, 0.3);
 
         // Turn on shooter for 2000 ms
         shooterMode(2000);
@@ -104,6 +131,13 @@ public class AutonomousTemplate extends LinearOpMode {
     public double degreesToInches(double degrees) {
         return Math.PI * TRACK_WIDTH * (degrees / 360.0);
     }
+
+    // Calculate robot's current angle
+    public double getHeading() {
+        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        return angles.firstAngle; // Z-axis rotation
+    }
+
 
     public void shooterMode(int i) {
         final int SPINUP_MS = 3000;  // time for shooter to reach speed
@@ -129,6 +163,37 @@ public class AutonomousTemplate extends LinearOpMode {
         telemetry.addLine("Shooter cycle complete");
         telemetry.update();
     }
+    public void imuTurn(double targetAngle, double power) {
+        // targetAngle in degrees, positive = right, negative = left
+        double error = targetAngle - getHeading();
+
+        // Normalize error to [-180, 180]
+        while (error > 180) error -= 360;
+        while (error < -180) error += 360;
+
+        while (Math.abs(error) > 1 && opModeIsActive()) {
+            double turnPower = power * Math.signum(error);
+            // Turns
+            leftFront.setPower(-turnPower);
+            leftRear.setPower(turnPower);
+            rightFront.setPower(-turnPower);
+            rightRear.setPower(-turnPower);
+
+            error = targetAngle - getHeading();
+            while (error > 180) error -= 360;
+            while (error < -180) error += 360;
+
+            telemetry.addData("Target", targetAngle);
+            telemetry.addData("Heading", getHeading());
+            telemetry.update();
+        }
+
+        // Stop all motors
+        leftFront.setPower(0);
+        leftRear.setPower(0);
+        rightFront.setPower(0);
+        rightRear.setPower(0);
+    }
 
 
     /**
@@ -140,6 +205,8 @@ public class AutonomousTemplate extends LinearOpMode {
      * @param turnDeg Degrees to turn (+right, -left)
      * @param timeoutS Maximum time to complete the move
      */
+
+
     public void encoderDriveMecanum(double speed, double forward, double strafe, double turnDeg, double timeoutS) {
 
         if (opModeIsActive()) {
