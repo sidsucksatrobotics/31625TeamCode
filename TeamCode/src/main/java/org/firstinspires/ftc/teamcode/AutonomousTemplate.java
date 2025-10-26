@@ -105,19 +105,31 @@ public class AutonomousTemplate extends LinearOpMode {
         return Math.PI * TRACK_WIDTH * (degrees / 360.0);
     }
 
-    public void shooterMode(int timeMS) {
-        mainShooter.setPower(1.0);
-        sleep(2000); // Lets the motor get to full speed
+    public void shooterMode(int i) {
+        final int SPINUP_MS = 3000;  // time for shooter to reach speed
+        final int FEED_MS = 300;     // how long feeders run
+
+        // Step 1: start main shooter
+        mainShooter.setPower(1);
+        telemetry.addLine("Shooter spinning up...");
+        telemetry.update();
+        sleep(SPINUP_MS); // wait for spin-up
+
+        // Step 2: start feeders
         leftShooter.setPower(-1.0);
         rightShooter.setPower(1.0);
+        telemetry.addLine("Feeding...");
+        telemetry.update();
+        sleep(FEED_MS); // run feeders
 
-        sleep(timeMS); // Run for timeMS
-
-        mainShooter.setPower(0);
+        // Step 3: stop feeders and shooter
         leftShooter.setPower(0);
         rightShooter.setPower(0);
-
+        mainShooter.setPower(0);
+        telemetry.addLine("Shooter cycle complete");
+        telemetry.update();
     }
+
 
     /**
      * Moves the mecanum robot based on forward/backward, strafe, and turn (in degrees).

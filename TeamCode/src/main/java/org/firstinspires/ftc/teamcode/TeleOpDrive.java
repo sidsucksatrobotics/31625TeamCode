@@ -14,8 +14,17 @@ public class TeleOpDrive extends LinearOpMode {
     private boolean precisionMode = false; // starts full speed
     private boolean lastBumperState = false; // for detecting button press of slow mode
     private boolean shooterMode = false; // starts with shooters off
-    private boolean lastShooterState = false; // for detecting button press of shooter
-    private long shooterStartTime = 0;
+
+    // Feeder timing variables
+    private boolean lastShooterButton = false;
+
+    private boolean feedTriggered = false;      // B button: single feed trigger
+    private boolean lastFeedButton = false;
+    private long feedStartTime = 0;
+
+    private final long FEED_MS = 300;          // feeders run duration
+
+
 
     @Override
     public void runOpMode() {
@@ -58,10 +67,15 @@ public class TeleOpDrive extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            // Joystick inputs
-            double y  = -gamepad1.left_stick_y;  // forward/back
-            double x  =  gamepad1.left_stick_x;  // strafe
-            double rx =  gamepad1.right_stick_x; // rotation
+            double y  = -gamepad1.left_stick_y;
+            double x  =  gamepad1.left_stick_x;
+            double rx =  gamepad1.right_stick_x;
+
+            // Deadzone filter
+            if (Math.abs(y) < 0.05) y = 0;
+            if (Math.abs(x) < 0.05) x = 0;
+            if (Math.abs(rx) < 0.05) rx = 0;
+
 
             // Calculate motor powers
             double frontLeftPower  = y + x + rx;
@@ -97,30 +111,42 @@ public class TeleOpDrive extends LinearOpMode {
             }
 
 
-            // Toggle shooter mode when A is pressed
+
+            // --- Toggle shooter with A ---
             boolean currentShooterButton = gamepad2.a;
-            if (currentShooterButton && !lastShooterState) {
+            if (currentShooterButton && !lastShooterButton) {
                 shooterMode = !shooterMode;
 
                 if (shooterMode) {
-                    // Start main shooter motor and record time
-                    mainShooter.setPower(1.0);
-                    shooterStartTime = System.currentTimeMillis(); // mark start
+                    mainShooter.setPower(1);  // start shooter
                 } else {
-                    // Stop everything
-                    mainShooter.setPower(0);
-                    leftShooter.setPower(0);
-                    rightShooter.setPower(0);
+                    mainShooter.setPower(0);    // stop shooter
                 }
             }
-            lastShooterState = currentShooterButton;
+            lastShooterButton = currentShooterButton;
 
-            // After toggling, check if 2 seconds have passed since main shooter started
-            if (shooterMode && System.currentTimeMillis() - shooterStartTime >= 2000) {
-                // Feed balls after spin-up delay
-                leftShooter.setPower(-1.0);
-                rightShooter.setPower(1.0);
+            // --- Trigger feed with B ---
+            boolean currentFeedButton = gamepad2.b;
+            if (currentFeedButton && !lastFeedButton) {
+                if (shooterMode) {
+                    // Only feed if shooter is spinning
+                    leftShooter.setPower(-1.0);
+                    rightShooter.setPower(1.0);
+                    feedStartTime = System.currentTimeMillis();
+                    feedTriggered = true;
+                }
             }
+            lastFeedButton = currentFeedButton;
+
+            // --- Stop feeders after FEED_MS ---
+            if (feedTriggered && System.currentTimeMillis() - feedStartTime >= FEED_MS) {
+                leftShooter.setPower(0);
+                rightShooter.setPower(0);
+                feedTriggered = false;  // reset trigger
+            }
+
+
+
 
 
 
