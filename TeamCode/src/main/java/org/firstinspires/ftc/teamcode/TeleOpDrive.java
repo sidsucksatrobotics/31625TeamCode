@@ -5,11 +5,13 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 @TeleOp(name="TeleOp Drive with Toggle Precision Mode", group="Linear Opmode")
 public class TeleOpDrive extends LinearOpMode {
-    private DcMotor leftFront, leftRear, rightFront, rightRear, mainShooter;
+    private DcMotor leftFront, leftRear, rightFront, rightRear;
     private CRServo leftShooter, rightShooter;
+    private DcMotorEx mainShooter;
 
     private boolean precisionMode = false; // starts full speed
     private boolean lastBumperState = false; // for detecting button press of slow mode
@@ -33,9 +35,16 @@ public class TeleOpDrive extends LinearOpMode {
         leftRear   = hardwareMap.get(DcMotor.class, "leftRear");
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         rightRear  = hardwareMap.get(DcMotor.class, "rightRear");
-        mainShooter = hardwareMap.get(DcMotor.class, "mainShooter");
         leftShooter = hardwareMap.get(CRServo.class, "leftShooter");
         rightShooter = hardwareMap.get(CRServo.class, "rightShooter");
+
+        // --- Shooter uses velocity control ---
+        mainShooter = hardwareMap.get(DcMotorEx.class, "mainShooter");
+
+        // Reset encoder for shooter
+        mainShooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        mainShooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
 
         // Reset encoders
         leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -118,10 +127,11 @@ public class TeleOpDrive extends LinearOpMode {
                 shooterMode = !shooterMode;
 
                 if (shooterMode) {
-                    mainShooter.setPower(1);  // start shooter
+                    mainShooter.setVelocity(2000);
                 } else {
-                    mainShooter.setPower(0);    // stop shooter
+                    mainShooter.setVelocity(0);
                 }
+
             }
             lastShooterButton = currentShooterButton;
 
@@ -169,7 +179,8 @@ public class TeleOpDrive extends LinearOpMode {
             telemetry.addData("Front Right Encoder", rightFront.getCurrentPosition());
             telemetry.addData("Back Left Encoder", leftRear.getCurrentPosition());
             telemetry.addData("Back Right Encoder", rightRear.getCurrentPosition());
-            telemetry.addData("Shooter Encoder", mainShooter.getCurrentPosition());
+            telemetry.addData("Shooter Velocity (tps)", mainShooter.getVelocity());
+
 
             // Updating data
             telemetry.update();

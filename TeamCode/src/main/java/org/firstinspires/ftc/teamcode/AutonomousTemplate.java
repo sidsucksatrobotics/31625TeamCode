@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -19,7 +20,7 @@ public class AutonomousTemplate extends LinearOpMode {
     // Drive motors
     private DcMotor leftFront, leftRear, rightFront, rightRear;
     // Shooter motors/servos
-    private DcMotor mainShooter;
+    private DcMotorEx mainShooter;
     private CRServo leftShooter, rightShooter;
 
     private ElapsedTime runtime = new ElapsedTime();
@@ -45,7 +46,7 @@ public class AutonomousTemplate extends LinearOpMode {
         leftRear   = hardwareMap.get(DcMotor.class, "leftRear");
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         rightRear  = hardwareMap.get(DcMotor.class, "rightRear");
-        mainShooter = hardwareMap.get(DcMotor.class, "mainShooter");
+        mainShooter = hardwareMap.get(DcMotorEx.class, "mainShooter");
         leftShooter = hardwareMap.get(CRServo.class, "leftShooter");
         rightShooter = hardwareMap.get(CRServo.class, "rightShooter");
 
@@ -109,8 +110,8 @@ public class AutonomousTemplate extends LinearOpMode {
         // Turn right 90 degrees
         imuTurn(90, 0.3);
 
-        // Turn on shooter for 2000 ms
-        shooterMode(2000);
+        // Turn on shooter for 3 cycles. Each cycle means one ball shot
+        shooterMode(3);
 
         // Move backward 24 inches
         encoderDriveMecanum(DRIVE_SPEED, -24, 0, 0, 4.0);
@@ -139,29 +140,34 @@ public class AutonomousTemplate extends LinearOpMode {
     }
 
 
-    public void shooterMode(int i) {
+    public void shooterMode(int cycles) {
         final int SPINUP_MS = 3000;  // time for shooter to reach speed
         final int FEED_MS = 300;     // how long feeders run
 
-        // Step 1: start main shooter
-        mainShooter.setPower(1);
-        telemetry.addLine("Shooter spinning up...");
-        telemetry.update();
-        sleep(SPINUP_MS); // wait for spin-up
+        for (int i=0; i < cycles; i++){
+            // Step 1: start main shooter
+            mainShooter.setVelocity(2000);
+            telemetry.addLine("Shooter spinning up...");
+            telemetry.update();
+            sleep(SPINUP_MS); // wait for spin-up
 
-        // Step 2: start feeders
-        leftShooter.setPower(-1.0);
-        rightShooter.setPower(1.0);
-        telemetry.addLine("Feeding...");
-        telemetry.update();
-        sleep(FEED_MS); // run feeders
+            // Step 2: start feeders
+            leftShooter.setPower(-1.0);
+            rightShooter.setPower(1.0);
+            telemetry.addLine("Feeding...");
+            telemetry.update();
+            sleep(FEED_MS); // run feeders
 
-        // Step 3: stop feeders and shooter
-        leftShooter.setPower(0);
-        rightShooter.setPower(0);
-        mainShooter.setPower(0);
-        telemetry.addLine("Shooter cycle complete");
-        telemetry.update();
+            // Step 3: stop feeders and shooter
+            leftShooter.setPower(0);
+            rightShooter.setPower(0);
+
+            telemetry.addLine("Shooter cycle complete");
+            telemetry.update();
+
+        }
+        mainShooter.setVelocity(0);
+
     }
     public void imuTurn(double targetAngle, double power) {
         // targetAngle in degrees, positive = right, negative = left
@@ -173,7 +179,7 @@ public class AutonomousTemplate extends LinearOpMode {
 
         while (Math.abs(error) > 1 && opModeIsActive()) {
             double turnPower = power * Math.signum(error);
-            // Turns
+            // Turn
             leftFront.setPower(-turnPower);
             leftRear.setPower(turnPower);
             rightFront.setPower(-turnPower);
