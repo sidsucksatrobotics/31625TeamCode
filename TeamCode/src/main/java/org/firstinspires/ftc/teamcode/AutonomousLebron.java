@@ -18,7 +18,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 
 @Autonomous(name="AutonomousLebron", group="Robot")
-public class AutonomousTemplate extends LinearOpMode {
+public class AutonomousLebron extends LinearOpMode {
 
 
 
@@ -99,6 +99,12 @@ public class AutonomousTemplate extends LinearOpMode {
 
         // START CODE HERE
 
+        driveStraightWithIMU(1, 24, 1);
+
+        shooterMode(3);
+        sleep(1500);
+
+        driveStraightWithIMU(1, 96, 1);
 
         // END CODE HERE
     }
@@ -125,7 +131,7 @@ public class AutonomousTemplate extends LinearOpMode {
 
         for (int i=0; i < cycles; i++){
             // Step 1: start main shooter
-            mainShooter.setPower(0.6);
+            mainShooter.setPower(0.5);
             telemetry.addLine("Shooter spinning up...");
             telemetry.update();
             sleep(SPINUP_MS); // wait for spin-up

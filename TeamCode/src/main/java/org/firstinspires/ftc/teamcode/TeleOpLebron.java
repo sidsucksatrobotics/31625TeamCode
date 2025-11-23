@@ -7,8 +7,8 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-@TeleOp(name="TeleOp Drive with Toggle Precision Mode", group="Linear Opmode")
-public class TeleOpDrive extends LinearOpMode {
+@TeleOp(name="TeleOpLebron", group="Linear Opmode")
+public class TeleOpLebron extends LinearOpMode {
     private DcMotor leftFront, leftRear, rightFront, rightRear;
     private CRServo leftShooter, rightShooter;
     private DcMotorEx mainShooter;
@@ -92,17 +92,23 @@ public class TeleOpDrive extends LinearOpMode {
             double frontRightPower = y - x - rx;
             double backRightPower  = y + x - rx;
 
-            // Normalize
-            double max = Math.max(1.0,
-                    Math.max(Math.abs(frontLeftPower),
-                            Math.max(Math.abs(backLeftPower),
-                                    Math.max(Math.abs(frontRightPower),
-                                            Math.abs(backRightPower)))));
+            double maxPower = 1.0;
+            double maxSpeed = 1.0;  // make this slower for outreaches
 
-            frontLeftPower  /= max;
-            backLeftPower   /= max;
-            frontRightPower /= max;
-            backRightPower  /= max;
+            // This is needed to make sure we don't pass > 1.0 to any wheel
+            // It allows us to keep all of the motors in proportion to what they should
+            // be and not get clipped
+            maxPower = Math.max(maxPower, Math.abs(frontLeftPower));
+            maxPower = Math.max(maxPower, Math.abs(frontRightPower));
+            maxPower = Math.max(maxPower, Math.abs(backRightPower));
+            maxPower = Math.max(maxPower, Math.abs(backLeftPower));
+
+            if (maxPower>1.0) {
+                frontLeftPower=frontLeftPower/maxPower;
+                frontRightPower=frontRightPower/maxPower;
+                backLeftPower=backLeftPower/maxPower;
+                backRightPower=backRightPower/maxPower;
+            }
 
             // Toggle precision mode on left bumper press
             boolean currentBumper = gamepad1.left_bumper;
@@ -127,9 +133,9 @@ public class TeleOpDrive extends LinearOpMode {
                 shooterMode = !shooterMode;
 
                 if (shooterMode) {
-                    mainShooter.setVelocity(2000);
+                    mainShooter.setPower(0.6);
                 } else {
-                    mainShooter.setVelocity(0);
+                    mainShooter.setPower(0);
                 }
 
             }
@@ -155,16 +161,11 @@ public class TeleOpDrive extends LinearOpMode {
                 feedTriggered = false;  // reset trigger
             }
 
-
-
-
-
-
             // Set motor powers
-            leftFront.setPower(frontLeftPower);
-            leftRear.setPower(backLeftPower);
-            rightFront.setPower(frontRightPower);
-            rightRear.setPower(backRightPower);
+            leftFront.setPower(maxSpeed * (frontLeftPower));
+            leftRear.setPower(maxSpeed * (backLeftPower));
+            rightFront.setPower(maxSpeed * (frontRightPower));
+            rightRear.setPower(maxSpeed * (backRightPower));
 
             // Add the data for motors and precision mode and shooter mode
             telemetry.addData("Drive Mode", precisionMode ? "Precision (Half Speed)" : "Full Speed");
