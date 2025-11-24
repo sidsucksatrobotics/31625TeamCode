@@ -9,11 +9,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 
@@ -83,12 +79,17 @@ public class AutonomousLebron extends LinearOpMode {
         leftRear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightRear.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        mainShooter.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 
         // Run motors using encoders (so we can track movement)
         leftFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        mainShooter.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+
+        // Tunable PIDF coefficients
+        mainShooter.setVelocityPIDFCoefficients(0, 0, 0, 13.5);
 
         // Display starting encoder positions for all four drive motors
         telemetry.addData("Starting Pos",
@@ -131,12 +132,12 @@ public class AutonomousLebron extends LinearOpMode {
 
 
     public void shooterMode(int cycles) {
-        final int SPINUP_MS = 7000;  // time for shooter to reach speed
+        final int SPINUP_MS = 700;  // time for shooter to reach speed
         final int FEED_MS = 530;     // how long feeders run
 
         for (int i=0; i < cycles; i++){
             // Step 1: start main shooter
-            mainShooter.setPower(0.5);
+            mainShooter.setVelocity(9417);
             telemetry.addLine("Shooter spinning up...");
             telemetry.update();
             sleep(SPINUP_MS); // wait for spin-up

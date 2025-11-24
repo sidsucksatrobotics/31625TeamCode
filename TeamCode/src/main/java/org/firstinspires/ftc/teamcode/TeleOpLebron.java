@@ -43,7 +43,7 @@ public class TeleOpLebron extends LinearOpMode {
 
         // Reset encoder for shooter
         mainShooter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        mainShooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        mainShooter.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
 
         // Reset encoders
@@ -58,7 +58,11 @@ public class TeleOpLebron extends LinearOpMode {
         leftRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightRear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        mainShooter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        mainShooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
+        // Tunable PIDF coefficients
+        mainShooter.setVelocityPIDFCoefficients(0, 0, 0, 13.5);
 
         // Reverse some motors
         rightFront.setDirection(DcMotor.Direction.REVERSE);
@@ -71,6 +75,7 @@ public class TeleOpLebron extends LinearOpMode {
         // Report initialized status
         telemetry.addData("Status", "Initialized");
         telemetry.update();
+
         // Wait to start
         waitForStart();
 
@@ -133,7 +138,7 @@ public class TeleOpLebron extends LinearOpMode {
                 shooterMode = !shooterMode;
 
                 if (shooterMode) {
-                    mainShooter.setPower(0.6);
+                    mainShooter.setVelocity(9417);
                 } else {
                     mainShooter.setPower(0);
                 }
