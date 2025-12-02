@@ -3,19 +3,15 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import org.opencv.core.Mat;
-import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.apriltag.AprilTagDetectorJNI;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
-import org.openftc.easyopencv.OpenCvCameraRotation;
-import org.openftc.easyopencv.OpenCvWebcam;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 
 
@@ -58,9 +54,7 @@ public class AutonomousCurry extends LinearOpMode {
     int motif = -1;      // motif decision
 
 
-    public void init(Mat firstFrame) {
-        nativeDetectorPtr = AprilTagDetectorJNI.createApriltagDetector(AprilTagDetectorJNI.TagFamily.TAG_36h11.string, 3, 3);
-    }
+
 
     class AprilTagPipeline extends OpenCvPipeline {
 
@@ -80,26 +74,31 @@ public class AutonomousCurry extends LinearOpMode {
                     case 20:
                         alliance = 1;
                         telemetry.addLine("Alliance: BLUE");
+                        telemetry.update();
                         break;
 
                     case 24:
                         alliance = 2;
                         telemetry.addLine("Alliance: RED");
+                        telemetry.update();
                         break;
 
                     case 21:
                         motif = 1;
                         telemetry.addLine("Motif Pattern GPP");
+                        telemetry.update();
                         break;
 
                     case 22:
                         motif = 2;
                         telemetry.addLine("Motif Pattern PGP");
+                        telemetry.update();
                         break;
 
                     case 23:
                         motif = 3;
                         telemetry.addLine("Motif Pattern PPG");
+                        telemetry.update();
                         break;
                 }
             }
@@ -115,9 +114,15 @@ public class AutonomousCurry extends LinearOpMode {
             leftBack   = hardwareMap.get(DcMotorEx.class, "leftBack");
             rightBack  = hardwareMap.get(DcMotorEx.class, "rightBack");
 
-            leftOdo = leftBack;
-            rightOdo = rightBack;
-            centerOdo = leftFront;
+            leftOdo = hardwareMap.get(DcMotorEx.class, "leftOdo");
+            rightOdo = hardwareMap.get(DcMotorEx.class, "rightOdo");
+            centerOdo = hardwareMap.get(DcMotorEx.class, "centerOdo");
+
+            leftOdo.setDirection(DcMotorEx.Direction.FORWARD);
+            rightOdo.setDirection(DcMotorEx.Direction.REVERSE); // depends on mounting
+            centerOdo.setDirection(DcMotorEx.Direction.FORWARD);
+
+
 
             rightFront.setDirection(DcMotorEx.Direction.REVERSE);
             rightBack.setDirection(DcMotorEx.Direction.REVERSE);
@@ -126,6 +131,15 @@ public class AutonomousCurry extends LinearOpMode {
             rightFront.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
             leftBack.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
             rightBack.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+
+            leftOdo.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+            rightOdo.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+            centerOdo.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+
+            leftOdo.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+            rightOdo.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+            centerOdo.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+
 
             lastL = leftOdo.getCurrentPosition();
             lastR = rightOdo.getCurrentPosition();
@@ -139,17 +153,18 @@ public class AutonomousCurry extends LinearOpMode {
             telemetry.addLine("Ready!");
             telemetry.update();
 
-            int cameraMonitorViewId = hardwareMap.appContext.getResources()
-                    .getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+            int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
 
-            OpenCvCamera webcam = OpenCvCameraFactory.getInstance().createWebcam(
-                    hardwareMap.get(WebcamName.class, "Webcam 1"),
-                    cameraMonitorViewId
-            );
+            OpenCvCamera webcam;
+            webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
 
             webcam.setPipeline(new AprilTagPipeline());
 
-            webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+            nativeDetectorPtr = AprilTagDetectorJNI.createApriltagDetector(AprilTagDetectorJNI.TagFamily.TAG_36h11.string, 3, 3
+        );
+
+
+        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
                 @Override
                 public void onOpened() {
                     webcam.startStreaming(800, 448);
@@ -167,6 +182,16 @@ public class AutonomousCurry extends LinearOpMode {
             1. Starting with the shooter facing the goal, move back and detect what alliance the robot is on and storing in the variable alliance. Either before or after that, we should shoot the 3 preloaded balls
             2. Go and detect the motif pattern on the obelisk
             3. Determine which set of balls to collect and shoot them into the goal
+
+            if(webcam != null){
+                webcam.stopStreaming();
+                webcam.closeCameraDevice();
+            }
+
+            if(nativeDetectorPtr != 0){
+                AprilTagDetectorJNI.releaseApriltagDetector(nativeDetectorPtr);
+            }
+
 
 
             */
@@ -187,7 +212,7 @@ public class AutonomousCurry extends LinearOpMode {
 
         lastL=newL; lastR=newR; lastC=newC;
 
-        heading = imu.getRobotYawPitchRollAngles().getYaw(); // radians
+        heading = Math.toRadians(imu.getRobotYawPitchRollAngles().getYaw()); // radians
 
         double dThetaEnc=(dR-dL)/TRACK_WIDTH;
 
@@ -313,7 +338,13 @@ public class AutonomousCurry extends LinearOpMode {
     public void goToPose(double targetX, double targetY, double targetHeadingDeg, double power){
         double targetHeadingRad = Math.toRadians(targetHeadingDeg);
 
-        while(opModeIsActive()){
+        ElapsedTime timer = new ElapsedTime();
+        timer.reset();
+
+        double timeout = 5.0; // seconds
+
+        while(opModeIsActive() && timer.seconds() < timeout){
+
 
             updateOdometry();
 

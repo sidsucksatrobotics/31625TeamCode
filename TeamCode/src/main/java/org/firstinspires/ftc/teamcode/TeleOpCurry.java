@@ -3,9 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name="TeleOpCurry")
 public class TeleOpCurry extends LinearOpMode {
@@ -46,9 +44,23 @@ public class TeleOpCurry extends LinearOpMode {
         leftBack   = hardwareMap.get(DcMotorEx.class, "leftBack");
         rightBack  = hardwareMap.get(DcMotorEx.class, "rightBack");
 
-        leftOdo   = leftBack;
-        rightOdo  = rightBack;
-        centerOdo = leftFront;
+        leftOdo   = hardwareMap.get(DcMotorEx.class, "leftOdo");
+        rightOdo  = hardwareMap.get(DcMotorEx.class, "rightOdo");
+        centerOdo = hardwareMap.get(DcMotorEx.class, "centerOdo");
+
+        leftOdo.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        rightOdo.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        centerOdo.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftOdo.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        rightOdo.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+        centerOdo.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
+
+
+        leftOdo.setDirection(DcMotorEx.Direction.FORWARD);
+        rightOdo.setDirection(DcMotorEx.Direction.REVERSE); // depends on mounting
+        centerOdo.setDirection(DcMotorEx.Direction.FORWARD);
+
 
         // Reverse motors as needed
         rightFront.setDirection(DcMotorEx.Direction.REVERSE);
@@ -104,6 +116,14 @@ public class TeleOpCurry extends LinearOpMode {
             double xInput = Math.abs(gamepad1.left_stick_x) > 0.05 ? gamepad1.left_stick_x : 0;
             double turnInput = Math.abs(gamepad1.right_stick_x) > 0.05 ? gamepad1.right_stick_x : 0;
 
+            // --- Apply heading lock correction ---
+            if (headingLock) {
+                double error = lockedHeading - heading;  // difference between desired and current heading
+                double kP = 0.02;                        // small proportional constant (tune as needed)
+                double correction = error * kP;
+                turnInput += correction;                  // add to driver turn input
+            }
+
 
             // Rotate joystick inputs by -heading for field-centric
             double temp = yInput * Math.cos(-driveHeading) - xInput * Math.sin(-driveHeading);
@@ -149,8 +169,10 @@ public class TeleOpCurry extends LinearOpMode {
             telemetry.addData("X", x);
             telemetry.addData("Y", y);
             telemetry.addData("Heading (deg)", Math.toDegrees(heading));
-            telemetry.update();
-        }
+            telemetry.addData("Heading", Math.toDegrees(heading));
+            telemetry.addData("Locked Heading", Math.toDegrees(lockedHeading));
+            telemetry.addData("Turn Input", turnInput);
+            telemetry.update();        }
     }
 
     // ----------------- ODOMETRY UPDATE -----------------
@@ -171,17 +193,21 @@ public class TeleOpCurry extends LinearOpMode {
 
         lastL = newL; lastR = newR; lastC = newC;
 
-        // Use Hub IMU for heading
-        heading = Math.toRadians(imu.getRobotYawPitchRollAngles().getYaw());
-
-
         // Encoder-based delta heading (small correction)
         double dThetaEnc = (dR - dL)/TRACK_WIDTH;
+
+        // Use Hub IMU for heading
+        double imuHeading = Math.toRadians(imu.getRobotYawPitchRollAngles().getYaw());
+        heading = 0.98 * (heading + dThetaEnc) + 0.02 * imuHeading;
+
+
+
+
 
         // Robot-frame movement
         double dx, dy;
         if(Math.abs(dThetaEnc)<1e-6){
-            dx = dC;
+            dx = dC - CENTER_WHEEL_OFFSET * dThetaEnc;
             dy = (dL+dR)/2.0;
         } else{
             double r = (dL+dR)/(2*dThetaEnc);
