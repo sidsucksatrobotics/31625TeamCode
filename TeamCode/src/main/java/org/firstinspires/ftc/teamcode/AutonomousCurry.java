@@ -218,7 +218,8 @@ public class AutonomousCurry extends LinearOpMode {
 
         double dx,dy;
         if(Math.abs(dThetaEnc)<1e-6){
-            dx=dC; dy=(dL+dR)/2.0;
+            dx = dC - CENTER_WHEEL_OFFSET * dThetaEnc;
+            dy=(dL+dR)/2.0;
         } else{
             double r=(dL+dR)/(2*dThetaEnc);
             double strafeRadius=dC/dThetaEnc;
